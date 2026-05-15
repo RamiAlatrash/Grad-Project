@@ -1,6 +1,8 @@
 # What Rami Did Today (Version: Final MVP 3.0)
 
-Here is a comprehensive log of every feature, fix, and design update applied to the project today.
+Changelog extended through **15 May 2026** — including Stress Test scroll behavior and Test Traces run-centric UX (see bottom section).
+
+Here is a comprehensive log of features, fixes, and design updates accumulated across MVP iterations (most recent entries at the end).
 
 ## 🎨 Visual & UI/UX Enhancements
 - **Contextual Help Panel**: Added a `?` button to the header bar on every page. Clicking it slides open a step-by-step guide for the active page, covering all nine views with plain-English instructions and a "Pro Tip" callout tailored for live demos and enterprise presentations. The panel auto-updates when you navigate to a different page.
@@ -349,6 +351,48 @@ If **LLM-as-Judge** **is** toggled on, the pipeline still uses the judge once pe
 - **`frontend/src/components/HelpPanel.tsx`**: Removed unused `CheckCircle2` import (strict `tsc` build).
 
 ---
+
+## Stress Test & Test Traces UX (Iteration: 15 May 2026 — post-MVP polish)
+
+### Stress Test: scroll without losing control mid-run
+
+**Problem:** Every new result called `scrollIntoView` on the list tail while `running` was true, so operators could not scroll up to **Stop Run** or review earlier iterations until the batch finished.
+
+**Fix (`frontend/src/components/TestingPage.tsx`):**
+
+- Added `STRESS_RESULTS_STICK_TO_BOTTOM_PX` (~140px) and helpers `getVerticalScrollAncestor`, `scrollDistanceFromBottom`, `isStressResultsNearLiveBottom`.
+- Auto-follow only runs when the sentinel is inside a **near-bottom** scroll ancestor (the AppShell main `overflow-y-auto` region, not only `window`).
+- If the user scrolls up, new iterations no longer yank the viewport; scrolling back to the bottom re-enables live follow.
+
+### Test Traces: run-centric list and API alignment
+
+**Goals:** Make the last stress test obvious, avoid a single flat table of mixed iterations, and fix an unusably long native `<select>` of runs.
+
+**Shared / client API**
+
+- **`shared/types.ts`**: `TestRunListItem` for rows from `GET /api/testing/runs`.
+- **`frontend/src/services/api.ts`**: `getTestRuns(limit?)` → `/api/testing/runs` (existing backend route).
+
+**Backend**
+
+- **`backend/src/services/database.service.ts`**: `getTestTraces` uses **`ORDER BY tres.created_at ASC`** when filtering by **`testRunId`** (iteration order within one run); keeps **`DESC`** for the global mixed list.
+
+**Frontend (`frontend/src/components/TestTracesPage.tsx`)**
+
+- Loads runs first; default scope **Latest** (newest `started_at` run) so it matches “last stress test” after a batch.
+- **Summary strip** for the selected run (status, defended counts, dates, description).
+- **All traces** mode: consecutive rows on the current page are **grouped under run headers** (#id, name, started, count on page).
+- **Table columns**: `#` (stress iteration when `…-iter-N` present), attack, provider, outcome, ms; full run name no longer repeated on every row in single-run view.
+- **`runsRef`**: **Refresh** updates the run list synchronously before fetching traces so picks stay consistent.
+- **Run picker**: Replaced native `<select>` with **Popover + filter field + scrollable list** (`max-h` tied to viewport) and **two-line run rows** (#, status, date, clamped name) so menus stay on-screen with long stress-test titles.
+
+### Mental model (Stress Test ↔ Test Traces)
+
+- Each persisted stress batch is a **`test_runs`** row; every iteration is a **`test_results`** row with that **`test_run_id`**.
+- The Stress Test page shows **`Run #<id>`** when the server returns `testRunId`; Test Traces defaults to the **latest** run so the same id is easy to match.
+
+---
+
 ## 🚀 The "Apply Everything" Prompt
 
 *If you need to apply all of these exact changes to an older branch or a different workspace, copy and paste the mega-prompt below to your LLM/Cursor:*

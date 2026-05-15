@@ -326,7 +326,9 @@ export class DatabaseService {
       queryText += ' WHERE ' + conditions.join(' AND ');
     }
 
-    queryText += ` ORDER BY tres.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    // Single-run view: chronological order (iteration flow). Mixed list: newest first.
+    const orderSql = filters.testRunId ? 'tres.created_at ASC' : 'tres.created_at DESC';
+    queryText += ` ORDER BY ${orderSql} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
     const result = await query(queryText, params);

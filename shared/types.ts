@@ -238,3 +238,17 @@ export interface TestTraceResponse {
   data: TestTrace[];
   total: number;
 }
+
+/** Row from `GET /api/testing/runs` (dates are ISO strings over the wire). */
+export interface TestRunListItem {
+  id: number;
+  name: string;
+  description: string;
+  startedAt: string;
+  completedAt?: string;
+  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  totalTests: number;
+  passedTests: number;
+  failedTests: number;
+  configuration: Record<string, unknown>;
+}

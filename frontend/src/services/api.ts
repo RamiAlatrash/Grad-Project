@@ -186,6 +186,11 @@ export const api = {
     return response.data;
   },
 
+  async getTestRuns(limit = 100): Promise<import('../../../shared/types').TestRunListItem[]> {
+    const response = await axios.get(`${API_BASE}/testing/runs?limit=${limit}`);
+    return response.data;
+  },
+
   async getRandomPrompt(): Promise<{ prompt: string }> {
     const response = await axios.get(`${API_BASE}/testing/random-prompt`);
     return response.data;

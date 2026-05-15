@@ -16,6 +16,8 @@ Research-oriented full-stack platform for **tiered prompt-injection attacks**, *
 - **Better Auth** session-based access control
 - Programmatic DB migrations and seeds (including default lab accounts)
 - Stress-testing API with streaming/progress feedback and metrics export concepts (see `docs/testing_framework.md`)
+- **Stress Test** result stream **auto-scrolls only while you stay near the bottom** of the pane, so you can scroll up to stop or inspect rows during long batches
+- **Test Traces** defaults to the **latest saved run**, supports **all traces** with **per-run group headers** on each page, chronological order **within** a selected run, and a **compact searchable run picker** (not a long native dropdown)
 
 ## Tech stack
 
@@ -139,7 +141,6 @@ After migrations/seeds (see `docs/setup.md`):
 ├── PROJECT_DOCUMENTATION.md   # Full technical reference
 ├── AttackLogic.md / DefenseLogic.md  # Design notes
 ├── what-rami-did.md   # Contribution / changelog notes
-└── suggestions.md, Thoughts*.md   # Additional brainstorming / presentation notes (kept for context)
 ```
 
 ## Documentation index

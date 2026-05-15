@@ -107,6 +107,42 @@ function formatSeverityKind(kind?: StressSeverityMetric['kind']): string | null 
   return kind.replace(/_/g, ' ');
 }
 
+/** Only auto-follow new results while the scroll position is near the bottom (lets you scroll up to Stop / inspect). */
+const STRESS_RESULTS_STICK_TO_BOTTOM_PX = 140;
+
+function getVerticalScrollAncestor(el: HTMLElement | null): HTMLElement | null {
+  if (!el) return null;
+  let node: HTMLElement | null = el.parentElement;
+  while (node && node !== document.documentElement && node !== document.body) {
+    const { overflowY } = window.getComputedStyle(node);
+    if (
+      node.scrollHeight - node.clientHeight > 8
+      && (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay')
+    ) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return document.scrollingElement instanceof HTMLElement ? document.scrollingElement : document.documentElement;
+}
+
+function scrollDistanceFromBottom(scrollEl: HTMLElement): number {
+  if (scrollEl === document.documentElement || scrollEl === document.body) {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+    const viewportBottom = scrollTop + window.innerHeight;
+    const full = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+    return Math.max(0, full - viewportBottom);
+  }
+  return Math.max(0, scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight);
+}
+
+function isStressResultsNearLiveBottom(sentinel: HTMLElement | null): boolean {
+  if (!sentinel) return true;
+  const ancestor = getVerticalScrollAncestor(sentinel);
+  if (!ancestor) return true;
+  return scrollDistanceFromBottom(ancestor) <= STRESS_RESULTS_STICK_TO_BOTTOM_PX;
+}
+
 function clampScoreThreshold(value: number): number {
   if (!Number.isFinite(value)) return SCORE_THRESHOLD_MIN;
   return Number(Math.min(SCORE_THRESHOLD_MAX, Math.max(SCORE_THRESHOLD_MIN, value)).toFixed(2));
@@ -198,7 +234,9 @@ function TestingPageContent({ documents }: { documents: Document[] }) {
   }, []);
 
   useEffect(() => {
-    if (running && resultsEndRef.current) resultsEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (!running || !resultsEndRef.current) return;
+    if (!isStressResultsNearLiveBottom(resultsEndRef.current)) return;
+    resultsEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [results.length, running]);
 
   useEffect(() => {
